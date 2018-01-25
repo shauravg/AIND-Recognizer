@@ -106,11 +106,29 @@ class SelectorDIC(ModelSelector):
     DIC = log(P(X(i)) - 1/(M-1)SUM(log(P(X(all but i))
     '''
 
+    def dic(self, n):
+        model = self.base_model(n)
+        scores = [model.score(self.hwords[word]) for word in self.hwords.items() if word != self.this_word]
+        return model.score(self.X, self.lengths) - np.mean(scores), model
+        
+        
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        worst_score = float("-inf")
+        best_model = self.base_model(self.n_constant)
+        
+        
+        for i in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                score, model = self.dic(i)
+                if score > worst_score:
+                    worst_score, best_model = score, model
+        
+            except:
+                continue
+        
+        return best_model
 
 
 class SelectorCV(ModelSelector):
